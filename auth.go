@@ -5,6 +5,8 @@ import (
 
 	"github.com/evergreen-ci/gimlet"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/code"
+	"google.golang.org/grpc/metadata"
 )
 
 // TODO: add interceptors to provide "role required" and "group
