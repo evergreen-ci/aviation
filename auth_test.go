@@ -10,15 +10,15 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const (
-	userName       = "testUser"
-	userAPIKey     = "123abc"
-	headerUserName = "UserName"
-	headerKeyName  = "KeyName"
-)
-
 func TestAuthRequiredInterceptors(t *testing.T) {
-	user := gimlet.NewBasicUser(userName, "test", "test@test.com", userAPIKey, nil)
+	const (
+		username       = "testUser"
+		userAPIKey     = "123abc"
+		headerUserName = "UserName"
+		headerKeyName  = "KeyName"
+	)
+
+	user := gimlet.NewBasicUser(username, "test", "test@test.com", userAPIKey, nil)
 	um, err := gimlet.NewBasicUserManager([]gimlet.User{user})
 	require.NoError(t, err)
 	conf := gimlet.UserMiddlewareConfiguration{
@@ -34,7 +34,7 @@ func TestAuthRequiredInterceptors(t *testing.T) {
 		{
 			name: "ValidAuth",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{userName},
+				headerUserName: []string{username},
 				headerKeyName:  []string{userAPIKey},
 			}),
 		},
@@ -46,7 +46,7 @@ func TestAuthRequiredInterceptors(t *testing.T) {
 		{
 			name: "MissingAPIKey",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{userName},
+				headerUserName: []string{username},
 			}),
 			err: true,
 		},
@@ -61,7 +61,7 @@ func TestAuthRequiredInterceptors(t *testing.T) {
 		{
 			name: "IncorrectAPIKey",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{userName},
+				headerUserName: []string{username},
 				headerKeyName:  []string{"incorrect"},
 			}),
 			err: true,
