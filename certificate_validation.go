@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
+// Return a gRPC UnaryServerInterceptor which checks the certifcate user's
+// validity against the given user manager.
 func MakeCertificateUserValidationUnaryInterceptor(um gimlet.UserManager) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		p, ok := peer.FromContext(ctx)
@@ -37,6 +39,8 @@ func MakeCertificateUserValidationUnaryInterceptor(um gimlet.UserManager) grpc.U
 	}
 }
 
+// Return a gRPC UnaryStreamInterceptor which checks the certifcate user's
+// validity against the given user manager.
 func MakeCertificateUserValidationStreamInterceptor(um gimlet.UserManager) grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		ctx := stream.Context()
