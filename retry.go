@@ -114,7 +114,6 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 
 func getBackoff(min, max time.Duration, factor float64, jitter bool) *backoff.Backoff {
 	return &backoff.Backoff{
-		// TODO: figure out the best options for this.
 		Min:    min,
 		Max:    max,
 		Factor: factor,
