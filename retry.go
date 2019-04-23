@@ -6,6 +6,7 @@ import (
 
 	"github.com/jpillora/backoff"
 	"github.com/mongodb/grip"
+	"github.com/mongodb/grip/message"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -13,19 +14,23 @@ import (
 func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		var lastErr error
-		b := &backoff.Backoff{
-			// TODO: figure out the best options for this.
-			Min:    100 * time.Millisecond,
-			Max:    time.Second,
-			Factor: 2,
-		}
+
+		b := getBackoff(100*time.Millisecond, time.Second, 2, false)
 		callCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
+		var i int
+		start := time.Now()
 	retry:
-		for i := 0; i < maxRetries; i++ {
+		for i = 0; i < maxRetries; i++ {
 			lastErr = invoker(callCtx, method, req, reply, cc, opts...)
-			grip.Infof("GRPC client retry attempt: %d, error: %v", i, lastErr)
+			grip.Info(message.Fields{
+				"message": "GRPC client retry",
+				"method":  method,
+				"attempt": i,
+				"error":   lastErr,
+			})
+
 			if lastErr == nil {
 				return nil
 			}
@@ -37,13 +42,21 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 			timer := time.NewTimer(b.Duration())
 			select {
 			case <-ctx.Done():
+				timer.Stop()
 				break retry
 			case <-timer.C:
 				continue retry
 			}
 		}
 
-		grip.Warning("GRPC client retries exceeded or canceled!")
+		timeElapsed := time.Now().Sub(start)
+		grip.Warning(message.Fields{
+			"message":      "GRPC client retries exceeded or canceled!",
+			"method":       method,
+			"totalRetries": i,
+			"timeElasped":  timeElapsed,
+			"lastError":    lastErr,
+		})
 		return lastErr
 	}
 }
@@ -52,19 +65,23 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		var clientStream grpc.ClientStream
 		var lastErr error
-		b := &backoff.Backoff{
-			// TODO: figure out the best options for this.
-			Min:    100 * time.Millisecond,
-			Max:    time.Second,
-			Factor: 2,
-		}
+
+		b := getBackoff(100*time.Millisecond, time.Second, 2, false)
 		callCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
+		var i int
+		start := time.Now()
 	retry:
-		for i := 0; i < maxRetries; i++ {
+		for i = 0; i < maxRetries; i++ {
 			clientStream, lastErr = streamer(callCtx, desc, cc, method, opts...)
-			grip.Infof("GRPC client retry attempt: %d, error: %v", i, lastErr)
+			grip.Info(message.Fields{
+				"message": "GRPC client retry",
+				"method":  method,
+				"attempt": i,
+				"error":   lastErr,
+			})
+
 			if lastErr == nil {
 				return clientStream, nil
 			}
@@ -76,14 +93,32 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 			timer := time.NewTimer(b.Duration())
 			select {
 			case <-ctx.Done():
+				timer.Stop()
 				break retry
 			case <-timer.C:
 				continue retry
 			}
 		}
 
-		grip.Warning("GRPC client retries exceeded or canceled!")
+		timeElapsed := time.Now().Sub(start)
+		grip.Warning(message.Fields{
+			"message":      "GRPC client retries exceeded or canceled!",
+			"method":       method,
+			"totalRetries": i,
+			"timeElasped":  timeElapsed,
+			"lastError":    lastErr,
+		})
 		return nil, lastErr
+	}
+}
+
+func getBackoff(min, max time.Duration, factor float64, jitter bool) *backoff.Backoff {
+	return &backoff.Backoff{
+		// TODO: figure out the best options for this.
+		Min:    min,
+		Max:    max,
+		Factor: factor,
+		Jitter: jitter,
 	}
 }
 
