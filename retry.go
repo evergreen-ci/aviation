@@ -16,14 +16,12 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 		var lastErr error
 
 		b := getBackoff(100*time.Millisecond, time.Second, 2, false)
-		callCtx, cancel := context.WithCancel(ctx)
-		defer cancel()
 
 		var i int
 		start := time.Now()
 	retry:
 		for i = 0; i < maxRetries; i++ {
-			lastErr = invoker(callCtx, method, req, reply, cc, opts...)
+			lastErr = invoker(ctx, method, req, reply, cc, opts...)
 			grip.Info(message.Fields{
 				"message": "GRPC client retry",
 				"method":  method,
@@ -36,7 +34,7 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 			}
 
 			if !isRetriable(lastErr) {
-				break
+				break retry
 			}
 
 			timer := time.NewTimer(b.Duration())
@@ -45,6 +43,7 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 				timer.Stop()
 				break retry
 			case <-timer.C:
+				timer.Stop()
 				continue retry
 			}
 		}
@@ -67,14 +66,12 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 		var lastErr error
 
 		b := getBackoff(100*time.Millisecond, time.Second, 2, false)
-		callCtx, cancel := context.WithCancel(ctx)
-		defer cancel()
 
 		var i int
 		start := time.Now()
 	retry:
 		for i = 0; i < maxRetries; i++ {
-			clientStream, lastErr = streamer(callCtx, desc, cc, method, opts...)
+			clientStream, lastErr = streamer(ctx, desc, cc, method, opts...)
 			grip.Info(message.Fields{
 				"message": "GRPC client retry",
 				"method":  method,
@@ -87,7 +84,7 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 			}
 
 			if !isRetriable(lastErr) {
-				break
+				break retry
 			}
 
 			timer := time.NewTimer(b.Duration())
@@ -96,6 +93,7 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 				timer.Stop()
 				break retry
 			case <-timer.C:
+				timer.Stop()
 				continue retry
 			}
 		}
