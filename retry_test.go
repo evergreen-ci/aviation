@@ -64,7 +64,7 @@ func TestMakeUnaryClientInterceptor(t *testing.T) {
 			expectedAttempts: 3,
 			hasErr:           true,
 			expectedMinTime:  300 * time.Millisecond,
-			expectedMaxTime:  1500 * time.Millisecond,
+			expectedMaxTime:  1000 * time.Millisecond,
 		},
 		{
 			name: "RetrySucess",
@@ -79,7 +79,7 @@ func TestMakeUnaryClientInterceptor(t *testing.T) {
 			retries:          10,
 			expectedAttempts: 4,
 			expectedMinTime:  700 * time.Millisecond,
-			expectedMaxTime:  1500 * time.Millisecond,
+			expectedMaxTime:  1000 * time.Millisecond,
 		},
 		{
 			name:             "ParentContextInterrupt",

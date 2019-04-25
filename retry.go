@@ -15,7 +15,7 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		var lastErr error
 
-		b := getBackoff(100*time.Millisecond, time.Second, 2, false)
+		b := getBackoff(100 * time.Millisecond)
 
 		var i int
 		start := time.Now()
@@ -49,13 +49,12 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 		}
 
 		timeElapsed := time.Now().Sub(start)
-		grip.Warning(message.Fields{
-			"message":      "GRPC client retries exceeded or canceled!",
-			"method":       method,
-			"totalRetries": i,
-			"timeElasped":  timeElapsed,
-			"lastError":    lastErr,
-		})
+		grip.Warning(message.WrapError(lastErr, message.Fields{
+			"message":       "GRPC client retries exceeded or canceled",
+			"method":        method,
+			"total_retries": i,
+			"time_elasped":  timeElapsed,
+		}))
 		return lastErr
 	}
 }
@@ -65,7 +64,7 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 		var clientStream grpc.ClientStream
 		var lastErr error
 
-		b := getBackoff(100*time.Millisecond, time.Second, 2, false)
+		b := getBackoff(100 * time.Millisecond)
 
 		var i int
 		start := time.Now()
@@ -99,23 +98,22 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 		}
 
 		timeElapsed := time.Now().Sub(start)
-		grip.Warning(message.Fields{
-			"message":      "GRPC client retries exceeded or canceled!",
-			"method":       method,
-			"totalRetries": i,
-			"timeElasped":  timeElapsed,
-			"lastError":    lastErr,
-		})
+		grip.Warning(message.WrapError(lastErr, message.Fields{
+			"message":       "GRPC client retries exceeded or canceled",
+			"method":        method,
+			"total_retries": i,
+			"time_elasped":  timeElapsed,
+		}))
 		return nil, lastErr
 	}
 }
 
-func getBackoff(min, max time.Duration, factor float64, jitter bool) *backoff.Backoff {
+func getBackoff(min time.Duration) *backoff.Backoff {
 	return &backoff.Backoff{
 		Min:    min,
-		Max:    max,
-		Factor: factor,
-		Jitter: jitter,
+		Max:    min * 10,
+		Factor: 2,
+		Jitter: false,
 	}
 }
 
