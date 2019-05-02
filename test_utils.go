@@ -2,6 +2,7 @@ package aviation
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,6 +40,9 @@ func mockUnaryHandler(_ context.Context, req interface{}) (interface{}, error) {
 		if t == "panic" {
 			panic("test panic")
 		}
+		if t == "error" {
+			return nil, errors.New("mock error")
+		}
 	}
 	return nil, nil
 }
@@ -48,6 +52,9 @@ func mockStreamHandler(srv interface{}, stream grpc.ServerStream) error {
 	case string:
 		if t == "panic" {
 			panic("test panic")
+		}
+		if t == "error" {
+			return errors.New("mock error")
 		}
 	}
 	return nil
