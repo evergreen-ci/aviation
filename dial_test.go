@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetOpts(t *testing.T) {
+func TestDial(t *testing.T) {
 	ctx := context.TODO()
 	tlsConf, err := GetClientTLSConfig(
 		filepath.Join("testdata", "ca.crt"),
