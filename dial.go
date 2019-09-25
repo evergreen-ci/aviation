@@ -62,7 +62,7 @@ func (opts *DialOptions) getOpts() ([]grpc.DialOption, error) {
 	tlsConf := opts.TLSConf
 	if tlsConf == nil && opts.CAFile != "" {
 		var err error
-		tlsConf, err = GetClientTLSConfig(opts.CAFile, opts.CrtFile, opts.KeyFile)
+		tlsConf, err = GetClientTLSConfigFromFiles(opts.CAFile, opts.CrtFile, opts.KeyFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "problem getting client TLS config")
 		}
