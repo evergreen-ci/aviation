@@ -11,7 +11,7 @@ import (
 
 func TestDial(t *testing.T) {
 	ctx := context.TODO()
-	tlsConf, err := GetClientTLSConfig(
+	tlsConf, err := GetClientTLSConfigFromFiles(
 		filepath.Join("testdata", "ca.crt"),
 		filepath.Join("testdata", "user.crt"),
 		filepath.Join("testdata", "user.key"),
