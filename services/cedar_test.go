@@ -22,7 +22,7 @@ func TestDialCedar(t *testing.T) {
 		require.NotNil(t, conn)
 		assert.NoError(t, conn.Close())
 
-		// make sure we use filepath.Join
+		// make sure we extra slash doesn't make a difference
 		conn, err = DialCedar(ctx, httpAddress+"/", rpcAddress, username, password, 10)
 		require.NoError(t, err)
 		require.NotNil(t, conn)
