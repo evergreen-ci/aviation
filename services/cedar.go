@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/evergreen-ci/aviation"
 	"github.com/pkg/errors"
@@ -23,7 +22,7 @@ type userCredentials struct {
 // DialCedar is a convenience function for creating a RPC client connection
 // with cedar via gRPC. The username and password are the LDAP credentials for
 // the cedar service.
-func DialCedar(ctx context.Context, httpAddress, rpcAddress, username, password string, retries int) (*grpc.ClientConn, error) {
+func DialCedar(ctx context.Context, client *http.Client, httpAddress, rpcAddress, username, password string, retries int) (*grpc.ClientConn, error) {
 	httpAddress = strings.TrimRight(httpAddress, "/")
 
 	creds := &userCredentials{
@@ -35,15 +34,15 @@ func DialCedar(ctx context.Context, httpAddress, rpcAddress, username, password 
 		return nil, errors.Wrap(err, "problem building credentials payload")
 	}
 
-	ca, err := makeCedarCertRequest(ctx, httpAddress+"/rest/v1/admin/ca", nil)
+	ca, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/ca", nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar root cert")
 	}
-	crt, err := makeCedarCertRequest(ctx, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload))
+	crt, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload))
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user cert")
 	}
-	key, err := makeCedarCertRequest(ctx, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload))
+	key, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload))
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user key")
 	}
@@ -60,9 +59,7 @@ func DialCedar(ctx context.Context, httpAddress, rpcAddress, username, password 
 	})
 }
 
-func makeCedarCertRequest(ctx context.Context, url string, body io.Reader) ([]byte, error) {
-	client := &http.Client{Timeout: 5 * time.Minute}
-
+func makeCedarCertRequest(ctx context.Context, client *http.Client, url string, body io.Reader) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, url, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem creating http request")
