@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/evergreen-ci/aviation"
 	"github.com/pkg/errors"
@@ -22,8 +21,9 @@ type userCredentials struct {
 // DialCedar is a convenience function for creating a RPC client connection
 // with cedar via gRPC. The username and password are the LDAP credentials for
 // the cedar service.
-func DialCedar(ctx context.Context, client *http.Client, httpAddress, rpcAddress, username, password string, retries int) (*grpc.ClientConn, error) {
-	httpAddress = strings.TrimRight(httpAddress, "/")
+func DialCedar(ctx context.Context, client *http.Client, baseAddress, rpcPort, username, password string, retries int) (*grpc.ClientConn, error) {
+	httpAddress := "https://" + baseAddress
+	rpcAddress := baseAddress + ":" + rpcPort
 
 	creds := &userCredentials{
 		Username: username,
