@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,13 +45,11 @@ func TestDialCedarOptionsValidate(t *testing.T) {
 			Retries:  10,
 		}
 		assert.NoError(t, opts.validate())
-		assert.Equal(t, &http.Client{}, opts.Client)
 		assert.Equal(t, "cedar.mongodb.com", opts.BaseAddress)
 		assert.Equal(t, "7070", opts.RPCPort)
 	})
 	t.Run("ConfiguredOptions", func(t *testing.T) {
 		opts := &DialCedarOptions{
-			Client:      &http.Client{Timeout: time.Minute},
 			BaseAddress: "base",
 			RPCPort:     "9090",
 			Username:    "username",
@@ -60,7 +57,6 @@ func TestDialCedarOptionsValidate(t *testing.T) {
 			Retries:     10,
 		}
 		assert.NoError(t, opts.validate())
-		assert.Equal(t, &http.Client{Timeout: time.Minute}, opts.Client)
 		assert.Equal(t, "base", opts.BaseAddress)
 		assert.Equal(t, "9090", opts.RPCPort)
 		assert.Equal(t, "username", opts.Username)
@@ -80,7 +76,7 @@ func TestDialCedar(t *testing.T) {
 			Password: password,
 			Retries:  10,
 		}
-		conn, err := DialCedar(ctx, opts)
+		conn, err := DialCedar(ctx, http.DefaultClient, opts)
 		require.NoError(t, err)
 		require.NotNil(t, conn)
 		assert.NoError(t, conn.Close())
@@ -92,7 +88,7 @@ func TestDialCedar(t *testing.T) {
 			Username:    username,
 			Password:    password,
 		}
-		conn, err := DialCedar(ctx, opts)
+		conn, err := DialCedar(ctx, http.DefaultClient, opts)
 		assert.Error(t, err)
 		assert.Nil(t, conn)
 	})
@@ -102,7 +98,7 @@ func TestDialCedar(t *testing.T) {
 			Password: "bad_password",
 			Retries:  10,
 		}
-		conn, err := DialCedar(ctx, opts)
+		conn, err := DialCedar(ctx, http.DefaultClient, opts)
 		assert.Error(t, err)
 		assert.Nil(t, conn)
 	})

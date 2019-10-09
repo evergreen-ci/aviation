@@ -18,7 +18,6 @@ import (
 // address is provided the RPC port must also be provided. The LDAP credentials
 // username and password must always be provided.
 type DialCedarOptions struct {
-	Client      *http.Client
 	BaseAddress string
 	RPCPort     string
 	Username    string
@@ -40,10 +39,6 @@ func (opts *DialCedarOptions) validate() error {
 		return errors.New("must provide the RPC port")
 	}
 
-	if opts.Client == nil {
-		opts.Client = &http.Client{}
-	}
-
 	return nil
 }
 
@@ -54,7 +49,7 @@ type userCredentials struct {
 
 // DialCedar is a convenience function for creating a RPC client connection
 // with cedar via gRPC.
-func DialCedar(ctx context.Context, opts *DialCedarOptions) (*grpc.ClientConn, error) {
+func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions) (*grpc.ClientConn, error) {
 	if err := opts.validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid dial cedar options")
 	}
@@ -70,15 +65,15 @@ func DialCedar(ctx context.Context, opts *DialCedarOptions) (*grpc.ClientConn, e
 		return nil, errors.Wrap(err, "problem building credentials payload")
 	}
 
-	ca, err := makeCedarCertRequest(ctx, opts.Client, httpAddress+"/rest/v1/admin/ca", nil)
+	ca, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/ca", nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar root cert")
 	}
-	crt, err := makeCedarCertRequest(ctx, opts.Client, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload))
+	crt, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload))
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user cert")
 	}
-	key, err := makeCedarCertRequest(ctx, opts.Client, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload))
+	key, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload))
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user key")
 	}
