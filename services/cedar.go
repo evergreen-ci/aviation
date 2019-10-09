@@ -13,36 +13,72 @@ import (
 	"google.golang.org/grpc"
 )
 
+// DialCedarOptions describes the options for the DialCedar function. The base
+// address defaults to `cedar.mongodb.com` and the RPC port to 7070. If a base
+// address is provided the RPC port must also be provided. The LDAP credentials
+// username and password must always be provided.
+type DialCedarOptions struct {
+	Client      *http.Client
+	BaseAddress string
+	RPCPort     string
+	Username    string
+	Password    string
+	Retries     int
+}
+
+func (opts *DialCedarOptions) validate() error {
+	if opts.Username == "" || opts.Password == "" {
+		return errors.New("must provide username and passowrd")
+	}
+
+	if opts.BaseAddress == "" {
+		opts.BaseAddress = "cedar.mongodb.com"
+		opts.RPCPort = "7070"
+	}
+
+	if opts.RPCPort == "" {
+		return errors.New("must provide the RPC port")
+	}
+
+	if opts.Client == nil {
+		opts.Client = &http.Client{}
+	}
+
+	return nil
+}
+
 type userCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 // DialCedar is a convenience function for creating a RPC client connection
-// with cedar via gRPC. The username and password are the LDAP credentials for
-// the cedar service.
-func DialCedar(ctx context.Context, client *http.Client, baseAddress, rpcPort, username, password string, retries int) (*grpc.ClientConn, error) {
-	httpAddress := "https://" + baseAddress
-	rpcAddress := baseAddress + ":" + rpcPort
+// with cedar via gRPC.
+func DialCedar(ctx context.Context, opts *DialCedarOptions) (*grpc.ClientConn, error) {
+	if err := opts.validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid dial cedar options")
+	}
+
+	httpAddress := "https://" + opts.BaseAddress
 
 	creds := &userCredentials{
-		Username: username,
-		Password: password,
+		Username: opts.Username,
+		Password: opts.Password,
 	}
 	credsPayload, err := json.Marshal(creds)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem building credentials payload")
 	}
 
-	ca, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/ca", nil)
+	ca, err := makeCedarCertRequest(ctx, opts.Client, httpAddress+"/rest/v1/admin/ca", nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar root cert")
 	}
-	crt, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload))
+	crt, err := makeCedarCertRequest(ctx, opts.Client, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload))
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user cert")
 	}
-	key, err := makeCedarCertRequest(ctx, client, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload))
+	key, err := makeCedarCertRequest(ctx, opts.Client, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload))
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user key")
 	}
@@ -53,8 +89,8 @@ func DialCedar(ctx context.Context, client *http.Client, baseAddress, rpcPort, u
 	}
 
 	return aviation.Dial(ctx, aviation.DialOptions{
-		Address: rpcAddress,
-		Retries: retries,
+		Address: opts.BaseAddress + ":" + opts.RPCPort,
+		Retries: opts.Retries,
 		TLSConf: tlsConf,
 	})
 }
