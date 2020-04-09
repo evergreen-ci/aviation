@@ -91,7 +91,7 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 }
 
 func makeCedarCertRequest(ctx context.Context, client *http.Client, url string, body io.Reader) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, url, body)
+	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem creating http request")
 	}
