@@ -69,20 +69,16 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 		Password: opts.Password,
 		APIKey:   opts.APIKey,
 	}
-	credsPayload, err := json.Marshal(creds)
-	if err != nil {
-		return nil, errors.Wrap(err, "problem building credentials payload")
-	}
 
-	ca, err := makeCedarCertRequest(ctx, client, http.MethodGet, httpAddress+"/rest/v1/admin/ca", nil, apiHeaders)
+	ca, err := makeCedarCertRequest(ctx, client, http.MethodGet, httpAddress+"/rest/v1/admin/ca", nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar root cert")
 	}
-	crt, err := makeCedarCertRequest(ctx, client, http.MethodPost, httpAddress+"/rest/v1/admin/users/certificate", bytes.NewBuffer(credsPayload), apiHeaders)
+	crt, err := makeCedarCertRequest(ctx, client, http.MethodPost, httpAddress+"/rest/v1/admin/users/certificate", creds)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user cert")
 	}
-	key, err := makeCedarCertRequest(ctx, client, http.MethodPost, httpAddress+"/rest/v1/admin/users/certificate/key", bytes.NewBuffer(credsPayload), apiHeaders)
+	key, err := makeCedarCertRequest(ctx, client, http.MethodPost, httpAddress+"/rest/v1/admin/users/certificate/key", creds)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem getting cedar user key")
 	}
@@ -99,14 +95,24 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 	})
 }
 
-func makeCedarCertRequest(ctx context.Context, client *http.Client, method, url string, body io.Reader, headers map[string]string) ([]byte, error) {
+func makeCedarCertRequest(ctx context.Context, client *http.Client, method, url string, creds *userCredentials) ([]byte, error) {
+	var body io.Reader
+	if creds != nil {
+		payload, err := json.Marshal(creds)
+		if err != nil {
+			return nil, errors.Wrap(err, "marshalling credentials payload")
+		}
+		body = bytes.NewBuffer(payload)
+	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem creating http request")
 	}
 	req = req.WithContext(ctx)
-	for key, val := range headers {
-		req.Header.Set(key, val)
+
+	if creds != nil && creds.Username != "" && creds.APIKey != "" {
+		req.Header.Set("Api-User", creds.Username)
+		req.Header.Set("Api-Key", creds.APIKey)
 	}
 
 	resp, err := client.Do(req)
