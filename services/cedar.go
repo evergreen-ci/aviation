@@ -49,6 +49,11 @@ type userCredentials struct {
 	APIKey   string `json:"api_key,omitempty"`
 }
 
+const (
+	APIUserHeader = "Api-User"
+	APIKeyHeader  = "Api-Key"
+)
+
 // DialCedar is a convenience function for creating a RPC client connection
 // with cedar via gRPC.
 func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions) (*grpc.ClientConn, error) {
@@ -60,8 +65,8 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 
 	apiHeaders := map[string]string{}
 	if opts.Username != "" && opts.APIKey != "" {
-		apiHeaders["Api-User"] = opts.Username
-		apiHeaders["Api-Key"] = opts.APIKey
+		apiHeaders[APIUserHeader] = opts.Username
+		apiHeaders[APIKeyHeader] = opts.APIKey
 	}
 
 	creds := &userCredentials{
