@@ -63,12 +63,6 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 
 	httpAddress := "https://" + opts.BaseAddress
 
-	apiHeaders := map[string]string{}
-	if opts.Username != "" && opts.APIKey != "" {
-		apiHeaders[APIUserHeader] = opts.Username
-		apiHeaders[APIKeyHeader] = opts.APIKey
-	}
-
 	creds := &userCredentials{
 		Username: opts.Username,
 		Password: opts.Password,
@@ -116,8 +110,8 @@ func makeCedarCertRequest(ctx context.Context, client *http.Client, method, url 
 	req = req.WithContext(ctx)
 
 	if creds != nil && creds.Username != "" && creds.APIKey != "" {
-		req.Header.Set("Api-User", creds.Username)
-		req.Header.Set("Api-Key", creds.APIKey)
+		req.Header.Set(APIUserHeader, creds.Username)
+		req.Header.Set(APIKeyHeader, creds.APIKey)
 	}
 
 	resp, err := client.Do(req)
