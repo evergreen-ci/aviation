@@ -15,19 +15,20 @@ import (
 
 // DialCedarOptions describes the options for the DialCedar function. The base
 // address defaults to `cedar.mongodb.com` and the RPC port to 7070. If a base
-// address is provided the RPC port must also be provided. The LDAP credentials
-// username and password must always be provided.
+// address is provided the RPC port must also be provided. The username and
+// either password or API key must always be provided.
 type DialCedarOptions struct {
 	BaseAddress string
 	RPCPort     string
 	Username    string
 	Password    string
+	APIKey      string
 	Retries     int
 }
 
 func (opts *DialCedarOptions) validate() error {
-	if opts.Username == "" || opts.Password == "" {
-		return errors.New("must provide username and passowrd")
+	if opts.Username == "" || (opts.Password == "" && opts.APIKey == "") {
+		return errors.New("must provide username and password or API key")
 	}
 
 	if opts.BaseAddress == "" {
@@ -44,7 +45,8 @@ func (opts *DialCedarOptions) validate() error {
 
 type userCredentials struct {
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password,omitempty"`
+	APIKey   string `json:"api_key,omitempty"`
 }
 
 // DialCedar is a convenience function for creating a RPC client connection
@@ -59,6 +61,7 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 	creds := &userCredentials{
 		Username: opts.Username,
 		Password: opts.Password,
+		APIKey:   opts.APIKey,
 	}
 	credsPayload, err := json.Marshal(creds)
 	if err != nil {
