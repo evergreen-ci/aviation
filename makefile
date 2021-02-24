@@ -78,11 +78,11 @@ $(buildDir)/output.%.test:$(buildDir) .FORCE
 	@! grep -s -q -e "^FAIL" $@ && ! grep -s -q "^WARNING: DATA RACE" $@
 $(buildDir)/output.%.coverage:$(buildDir) .FORCE
 	$(gobin) test $(testArgs) -covermode=count -coverprofile ./$(if $(subst $(name),,$*),$(subst -,/,$*),) | tee $@
-	# $(gobin) test $(testArgs) ./$(if $(subst $(name),,$*),$*,) -covermode=count -coverprofile $@ | tee $@
 	@-[ -f $@ ] && $(gobin) tool cover -func=$@ | sed 's%$(projectPath)/%%' | column -t
 $(buildDir)/output.%.coverage.html:$(buildDir)/output.%.coverage
 	$(gobin) tool cover -html=$< -o $@
 #  targets to generate gotest output from the linter.
+# We have to handle the PATH specially for CI, because if the PATH has a different version of Go in it, it'll break.
 $(buildDir)/output.%.lint:$(buildDir)/run-linter $(buildDir)/ .FORCE
 	@$(if $(GO_BIN_PATH), PATH="$(shell dirname $(GO_BIN_PATH)):$(PATH)") ./$< --output=$@ --lintBin=$(buildDir)/golangci-lint --packages='$*'
 #  targets to process and generate coverage reports
