@@ -17,8 +17,7 @@ func MakeAuthenticationRequiredUnaryInterceptor(um gimlet.UserManager, conf giml
 	ignoreMap := getIgnoreMap(ignore)
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if info == nil || !ignoreMap[info.FullMethod] {
-			var err error
-			if ctx, err = checkUser(ctx, um, conf); err != nil {
+			if err := checkUser(ctx, um, conf); err != nil {
 				return nil, err
 			}
 		}
@@ -31,7 +30,7 @@ func MakeAuthenticationRequiredStreamInterceptor(um gimlet.UserManager, conf gim
 	ignoreMap := getIgnoreMap(ignore)
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		if info == nil || !ignoreMap[info.FullMethod] {
-			if _, err := checkUser(stream.Context(), um, conf); err != nil {
+			if err := checkUser(stream.Context(), um, conf); err != nil {
 				return err
 			}
 		}
@@ -49,10 +48,10 @@ func getIgnoreMap(ignore []string) map[string]bool {
 	return ignoreMap
 }
 
-func checkUser(ctx context.Context, um gimlet.UserManager, conf gimlet.UserMiddlewareConfiguration) (context.Context, error) {
+func checkUser(ctx context.Context, um gimlet.UserManager, conf gimlet.UserMiddlewareConfiguration) error {
 	meta, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, grpc.Errorf(codes.Unauthenticated, "missing metadata from context")
+		return grpc.Errorf(codes.Unauthenticated, "missing metadata from context")
 	}
 
 	var (
@@ -74,21 +73,21 @@ func checkUser(ctx context.Context, um gimlet.UserManager, conf gimlet.UserMiddl
 	}
 
 	if len(authDataAPIKey) == 0 {
-		return nil, grpc.Errorf(codes.Unauthenticated, "user key not provided")
+		return grpc.Errorf(codes.Unauthenticated, "user key not provided")
 	}
 
 	usr, err := um.GetUserByID(authDataName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "finding user: %+v", err)
+		return grpc.Errorf(codes.Unauthenticated, "finding user: %+v", err)
 	}
 
 	if usr == nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "user not found")
+		return grpc.Errorf(codes.Unauthenticated, "user not found")
 	}
 
 	if usr.GetAPIKey() != authDataAPIKey {
-		return nil, grpc.Errorf(codes.Unauthenticated, "incorrect credentials")
+		return grpc.Errorf(codes.Unauthenticated, "incorrect credentials")
 	}
 
-	return SetRequestUser(ctx, usr), nil
+	return nil
 }
