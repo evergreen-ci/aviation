@@ -55,6 +55,10 @@ func (opts *DialOptions) validate() error {
 		errors.New("must provide all or none of the required certificate filenames"),
 	)
 	catcher.AddWhen((opts.Username == "") != (opts.APIKey == ""), errors.New("must provide both a username and API key or neither"))
+	catcher.AddWhen(
+		(opts.Username != "" || opts.APIKey != "") && (opts.APIUserHeader == "" || opts.APIKeyHeader == ""),
+		errors.New("must provide an API user header and key header when providing a username and API key"),
+	)
 
 	return catcher.Resolve()
 }
