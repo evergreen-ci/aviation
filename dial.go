@@ -54,7 +54,7 @@ func (opts *DialOptions) validate() error {
 		((opts.CAFile == "") != (opts.CrtFile == "")) || ((opts.CAFile == "") != (opts.KeyFile == "")),
 		errors.New("must provide all or none of the required certificate filenames"),
 	)
-	catcher.AddWhen((opts.Username == "") != (opts.APIKey == ""), errors.New("must provide or exclude both a username and api key"))
+	catcher.AddWhen((opts.Username == "") != (opts.APIKey == ""), errors.New("must provide both a username and API key or neither"))
 
 	return catcher.Resolve()
 }
