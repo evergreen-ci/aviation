@@ -44,9 +44,9 @@ func (opts *DialCedarOptions) validate() error {
 		opts.RPCPort = "7070"
 	}
 
-	catcher.AddWhen(opts.Username == "" || opts.APIKey == "", errors.New("must provide username and API key"))
-	catcher.AddWhen(opts.RPCPort == "", errors.New("must provide the RPC port"))
-	catcher.AddWhen(opts.TLSAuth && opts.Insecure, errors.New("cannot use TLS auth over an insecure connection"))
+	catcher.NewWhen(opts.Username == "" || opts.APIKey == "", "must provide username and API key")
+	catcher.NewWhen(opts.RPCPort == "", "must provide the RPC port")
+	catcher.NewWhen(opts.TLSAuth && opts.Insecure, "cannot use TLS auth over an insecure connection")
 
 	return catcher.Resolve()
 }
