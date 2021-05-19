@@ -35,7 +35,7 @@ func GetClientTLSConfig(cas [][]byte, crt, key []byte) (*tls.Config, error) {
 func GetCACertPool(cas ...[]byte) (*x509.CertPool, error) {
 	cp := x509.NewCertPool()
 	if runtime.GOOS != "windows" {
-		// Windows, as always, has to be different and we golang cannot
+		// Windows, as always, has to be different and golang cannot
 		// access the system cert pool.
 		var err error
 		cp, err = x509.SystemCertPool()
