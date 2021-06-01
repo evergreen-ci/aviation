@@ -93,8 +93,8 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 	} else if !opts.Insecure {
 		caCerts := opts.CACerts
 		if runtime.GOOS == "windows" {
-			// Since windows is complicated, we need to fetch the
-			// AWS CA certs from an s3 bucket. See `getAWSCACerts`
+			// Since Windows is complicated, we need to fetch the
+			// AWS CA certs from an S3 bucket. See `getAWSCACerts`
 			// below for more information.
 			cas, err := getAWSCACerts(ctx, client)
 			if err != nil {
