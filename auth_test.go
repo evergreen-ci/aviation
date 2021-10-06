@@ -18,8 +18,11 @@ func TestAuthRequiredInterceptors(t *testing.T) {
 		headerKeyName  = "key"
 	)
 
-	user := gimlet.NewBasicUser(username, "test", "test@test.com", userAPIKey, nil)
-	um, err := gimlet.NewBasicUserManager([]gimlet.User{user})
+	opts, err := gimlet.NewBasicUserOptions("test")
+	require.NoError(t, err)
+	opts.Email("test@test.com").Key(userAPIKey)
+	user := gimlet.NewBasicUser(opts)
+	um, err := gimlet.NewBasicUserManager([]gimlet.BasicUser{*user}, nil)
 	require.NoError(t, err)
 	conf := gimlet.UserMiddlewareConfiguration{
 		HeaderUserName: headerUserName,

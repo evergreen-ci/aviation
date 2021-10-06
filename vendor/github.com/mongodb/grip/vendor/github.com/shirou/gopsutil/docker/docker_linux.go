@@ -117,13 +117,13 @@ func CgroupCPUWithContext(ctx context.Context, containerID string, base string) 
 		if fields[0] == "user" {
 			user, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.User = user / cpu.CPUTick
+				ret.User = user / cpu.ClocksPerSec
 			}
 		}
 		if fields[0] == "system" {
 			system, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.System = system / cpu.CPUTick
+				ret.System = system / cpu.ClocksPerSec
 			}
 		}
 	}
@@ -269,7 +269,7 @@ func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*Cgrou
 	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
 }
 
-// getCgroupFilePath constructs file path to get targetted stats file.
+// getCgroupFilePath constructs file path to get targeted stats file.
 func getCgroupFilePath(containerID, base, target, file string) string {
 	if len(base) == 0 {
 		base = common.HostSys(fmt.Sprintf("fs/cgroup/%s/docker", target))

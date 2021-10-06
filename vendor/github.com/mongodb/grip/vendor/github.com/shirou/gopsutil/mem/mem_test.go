@@ -5,8 +5,15 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/shirou/gopsutil/internal/common"
 	"github.com/stretchr/testify/assert"
 )
+
+func skipIfNotImplementedErr(t *testing.T, err error) {
+	if err == common.ErrNotImplementedError {
+		t.Skip("not implemented")
+	}
+}
 
 func TestVirtual_memory(t *testing.T) {
 	if runtime.GOOS == "solaris" {
@@ -14,6 +21,7 @@ func TestVirtual_memory(t *testing.T) {
 	}
 
 	v, err := VirtualMemory()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -21,6 +29,7 @@ func TestVirtual_memory(t *testing.T) {
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
+	t.Log(v)
 
 	assert.True(t, v.Total > 0)
 	assert.True(t, v.Available > 0)
@@ -28,11 +37,14 @@ func TestVirtual_memory(t *testing.T) {
 
 	total := v.Used + v.Free + v.Buffers + v.Cached
 	totalStr := "used + free + buffers + cached"
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		total = v.Used + v.Available
 		totalStr = "used + available"
-	}
-	if runtime.GOOS == "freebsd" {
+	case "darwin", "openbsd":
+		total = v.Used + v.Free + v.Cached + v.Inactive
+		totalStr = "used + free + cached + inactive"
+	case "freebsd":
 		total = v.Used + v.Free + v.Cached + v.Inactive + v.Laundry
 		totalStr = "used + free + cached + inactive + laundry"
 	}
@@ -40,7 +52,7 @@ func TestVirtual_memory(t *testing.T) {
 		"Total should be computable (%v): %v", totalStr, v)
 
 	assert.True(t, runtime.GOOS == "windows" || v.Free > 0)
-	assert.True(t, v.Available > v.Free,
+	assert.True(t, runtime.GOOS == "windows" || v.Available > v.Free,
 		"Free should be a subset of Available: %v", v)
 
 	inDelta := assert.InDelta
@@ -54,6 +66,7 @@ func TestVirtual_memory(t *testing.T) {
 
 func TestSwap_memory(t *testing.T) {
 	v, err := SwapMemory()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -61,6 +74,8 @@ func TestSwap_memory(t *testing.T) {
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
+
+	t.Log(v)
 }
 
 func TestVirtualMemoryStat_String(t *testing.T) {
@@ -71,7 +86,7 @@ func TestVirtualMemoryStat_String(t *testing.T) {
 		UsedPercent: 30.1,
 		Free:        40,
 	}
-	e := `{"total":10,"available":20,"used":30,"usedPercent":30.1,"free":40,"active":0,"inactive":0,"wired":0,"laundry":0,"buffers":0,"cached":0,"writeback":0,"dirty":0,"writebacktmp":0,"shared":0,"slab":0,"pagetables":0,"swapcached":0,"commitlimit":0,"committedas":0,"hightotal":0,"highfree":0,"lowtotal":0,"lowfree":0,"swaptotal":0,"swapfree":0,"mapped":0,"vmalloctotal":0,"vmallocused":0,"vmallocchunk":0,"hugepagestotal":0,"hugepagesfree":0,"hugepagesize":0}`
+	e := `{"total":10,"available":20,"used":30,"usedPercent":30.1,"free":40,"active":0,"inactive":0,"wired":0,"laundry":0,"buffers":0,"cached":0,"writeback":0,"dirty":0,"writebacktmp":0,"shared":0,"slab":0,"sreclaimable":0,"sunreclaim":0,"pagetables":0,"swapcached":0,"commitlimit":0,"committedas":0,"hightotal":0,"highfree":0,"lowtotal":0,"lowfree":0,"swaptotal":0,"swapfree":0,"mapped":0,"vmalloctotal":0,"vmallocused":0,"vmallocchunk":0,"hugepagestotal":0,"hugepagesfree":0,"hugepagesize":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("VirtualMemoryStat string is invalid: %v", v)
 	}
@@ -83,8 +98,14 @@ func TestSwapMemoryStat_String(t *testing.T) {
 		Used:        30,
 		Free:        40,
 		UsedPercent: 30.1,
+		Sin:         1,
+		Sout:        2,
+		PgIn:        3,
+		PgOut:       4,
+		PgFault:     5,
+		PgMajFault:  6,
 	}
-	e := `{"total":10,"used":30,"free":40,"usedPercent":30.1,"sin":0,"sout":0}`
+	e := `{"total":10,"used":30,"free":40,"usedPercent":30.1,"sin":1,"sout":2,"pgin":3,"pgout":4,"pgfault":5,"pgmajfault":6}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("SwapMemoryStat string is invalid: %v", v)
 	}

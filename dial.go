@@ -71,7 +71,7 @@ func (opts *DialOptions) getOpts() ([]grpc.DialOption, error) {
 	}
 
 	dialOpts := []grpc.DialOption{
-		// TODO (PM-2158): After upgrading Go, we should investiage
+		// TODO (PM-2158): After upgrading Go, we should investigate
 		// whether later versions of grpc fixed the following issue
 		// and, if so, upgrade grpc:
 		// Even though we use the default keep alive time of infinity
