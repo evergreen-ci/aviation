@@ -75,7 +75,7 @@ endif
 ifneq (,$(SKIP_LONG))
 testArgs += -short
 endif
-ifneq (,$(DISABLE_COVERAGE))
+ifeq (,$(DISABLE_COVERAGE))
 testArgs += -cover
 endif
 ifneq (,$(RACE_DETECTOR))

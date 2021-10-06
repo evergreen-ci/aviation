@@ -17,8 +17,11 @@ import (
 func TestCertificateUserValidationInterceptors(t *testing.T) {
 	const username = "testUser"
 
-	user := gimlet.NewBasicUser(username, "test", "test@test.com", "abc123", nil)
-	um, err := gimlet.NewBasicUserManager([]gimlet.User{user})
+	opts, err := gimlet.NewBasicUserOptions("test")
+	require.NoError(t, err)
+	opts.Email("test@test.com").Key("abc123")
+	user := gimlet.NewBasicUser(opts)
+	um, err := gimlet.NewBasicUserManager([]gimlet.BasicUser{*user}, nil)
 	require.NoError(t, err)
 
 	for _, test := range []struct {
