@@ -11,11 +11,28 @@ ifneq (,$(GOROOT))
 gobin := $(GOROOT)/bin/go
 endif
 
+gocache := $(GOCACHE)
+ifeq (,$(gocache))
+gocache := $(abspath $(buildDir)/.cache)
+endif
+lintCache := $(GOLANGCI_LINT_CACHE)
+ifeq (,$(lintCache))
+lintCache := $(abspath $(buildDir)/.lint-cache)
+endif
+
 ifeq ($(OS),Windows_NT)
-export GOCACHE := $(shell cygpath -m $(abspath $(buildDir)/.cache))
-export GOLANGCI_LINT_CACHE := $(shell cygpath -m $(abspath $(buildDir)/.lint-cache))
+gobin := $(shell cygpath $(gobin))
+gocache := $(shell cygpath -m $(gocache))
+lintCache := $(shell cygpath -m $(lintCache))
 export GOPATH := $(shell cygpath -m $(GOPATH))
 export GOROOT := $(shell cygpath -m $(GOROOT))
+endif
+
+ifneq ($(gocache),$(GOCACHE))
+export GOCACHE := $(gocache)
+endif
+ifneq ($(lintCache),$(GOLANGCI_LINT_CACHE))
+export GOLANGCI_LINT_CACHE := $(lintCache)
 endif
 
 export GO111MODULE := off
@@ -33,7 +50,6 @@ $(shell mkdir -p $(buildDir))
 .DEFAULT_GOAL := compile
 
 # start lint setup targets
-lintDeps := $(buildDir)/golangci-lint $(buildDir)/.lintSetup $(buildDir)/run-linter
 $(buildDir)/golangci-lint:
 	@curl --retry 10 --retry-max-time 60 -sSfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(buildDir) v1.40.0 >/dev/null 2>&1 && touch $@
 $(buildDir)/run-linter: cmd/run-linter/run-linter.go $(buildDir)/golangci-lint
@@ -89,10 +105,11 @@ testArgs += -race
 endif
 $(buildDir)/output.%.test: .FORCE
 	$(gobin) test $(testArgs) ./$(if $(subst $(name),,$*),$(subst -,/,$*),) | tee $@
-	@! grep -s -q -e "^FAIL" $@ && ! grep -s -q "^WARNING: DATA RACE" $@
+	@grep -s -q -e "^PASS" $@
 $(buildDir)/output.%.coverage: .FORCE
 	$(gobin) test $(testArgs) -covermode=count -coverprofile ./$(if $(subst $(name),,$*),$(subst -,/,$*),) | tee $@
 	@-[ -f $@ ] && $(gobin) tool cover -func=$@ | sed 's%$(projectPath)/%%' | column -t
+	@grep -s -q -e "^PASS" $(subst coverage,test,$@)
 $(buildDir)/output.%.coverage.html: $(buildDir)/output.%.coverage
 	$(gobin) tool cover -html=$< -o $@
 
