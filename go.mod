@@ -1,6 +1,6 @@
 module github.com/evergreen-ci/aviation
 
-go 1.17
+go 1.16
 
 require (
 	github.com/evergreen-ci/gimlet v0.0.0-20211018155143-ebbbff34990a
