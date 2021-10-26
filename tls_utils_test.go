@@ -64,7 +64,7 @@ func TestGetClientTLSConfig(t *testing.T) {
 					require.NoError(t, err)
 					require.True(t, cp.AppendCertsFromPEM(ca))
 				}
-				assert.Equal(t, cp, conf.RootCAs)
+				assert.Equal(t, cp.Subjects(), conf.RootCAs.Subjects())
 			}
 		})
 	}
