@@ -17,7 +17,7 @@ import (
 func TestCertificateUserValidationInterceptors(t *testing.T) {
 	const username = "testUser"
 
-	opts, err := gimlet.NewBasicUserOptions("test")
+	opts, err := gimlet.NewBasicUserOptions(username)
 	require.NoError(t, err)
 	opts.Email("test@test.com").Key("abc123")
 	user := gimlet.NewBasicUser(opts)
