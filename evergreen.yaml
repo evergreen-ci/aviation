@@ -13,6 +13,7 @@ variables:
     # runs a build operation. The task name in evergreen should
     # correspond to a make target for the build operation.
     name: test
+    must_have_test_results: true
     commands:
       - func: get-project-and-modules
       - func: run-make
@@ -26,11 +27,11 @@ functions:
     - command: git.get_project
       type: system
       params:
-        directory: ${workdir}/aviation
+        directory: aviation
     - command: subprocess.exec
       type: setup
       params:
-        working_dir: ${workdir}/aviation
+        working_dir: aviation
         binary: make
         args: ["mod-tidy"]
         include_expansions_in_env: ["GOROOT"]
@@ -38,7 +39,7 @@ functions:
     command: subprocess.exec
     type: test
     params:
-      working_dir: ${workdir}/aviation
+      working_dir: aviation
       binary: make
       args: ["${target}"]
       include_expansions_in_env: ["GOROOT", "RACE_DETECTOR"]
