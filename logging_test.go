@@ -57,7 +57,7 @@ func TestGripInterceptors(t *testing.T) {
 				if assert.True(t, sender.HasMessage()) {
 					require.Equal(t, 2, sender.Len())
 					msg := sender.GetMessage()
-					assert.Equal(t, level.Debug, msg.Priority)
+					assert.Equal(t, level.Info, msg.Priority)
 					msg = sender.GetMessage()
 					assert.Equal(t, expectedPriority(test.action), msg.Priority)
 				}
@@ -80,7 +80,7 @@ func TestGripInterceptors(t *testing.T) {
 				if assert.True(t, sender.HasMessage()) {
 					require.Equal(t, 2, sender.Len())
 					msg := sender.GetMessage()
-					assert.Equal(t, level.Debug, msg.Priority)
+					assert.Equal(t, level.Info, msg.Priority)
 					msg = sender.GetMessage()
 					assert.Equal(t, expectedPriority(test.action), msg.Priority)
 				}
@@ -96,6 +96,6 @@ func expectedPriority(action string) level.Priority {
 	case "panic":
 		return level.Alert
 	default:
-		return level.Debug
+		return level.Info
 	}
 }

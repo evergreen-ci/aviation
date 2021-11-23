@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func MakeGripUnaryInterceptor(logger grip.Journaler) grpc.UnaryServerInterceptor {
+func makeGripUnaryInterceptor(logger grip.Journaler, when func() bool) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		startAt := time.Now()
 		id := getNumber()
@@ -29,7 +29,8 @@ func MakeGripUnaryInterceptor(logger grip.Journaler) grpc.UnaryServerInterceptor
 			})
 		}()
 
-		logger.Debug(message.Fields{
+		shouldLog := when()
+		logger.InfoWhen(shouldLog, message.Fields{
 			"action":  "started",
 			"request": id,
 			"method":  info.FullMethod,
@@ -60,14 +61,22 @@ func MakeGripUnaryInterceptor(logger grip.Journaler) grpc.UnaryServerInterceptor
 		if m["has_error"] == true {
 			logger.Error(m)
 		} else {
-			logger.Debug(m)
+			logger.InfoWhen(shouldLog, m)
 		}
 
 		return
 	}
 }
 
-func MakeGripStreamInterceptor(logger grip.Journaler) grpc.StreamServerInterceptor {
+func MakeGripUnaryInterceptor(logger grip.Journaler) grpc.UnaryServerInterceptor {
+	return makeGripUnaryInterceptor(logger, func() bool { return true })
+}
+
+func MakeConditionalGripUnaryInterceptor(logger grip.Journaler, when func() bool) grpc.UnaryServerInterceptor {
+	return makeGripUnaryInterceptor(logger, when)
+}
+
+func makeGripStreamInterceptor(logger grip.Journaler, when func() bool) grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		startAt := time.Now()
 		id := getNumber()
@@ -82,7 +91,8 @@ func MakeGripStreamInterceptor(logger grip.Journaler) grpc.StreamServerIntercept
 			})
 		}()
 
-		logger.Debug(message.Fields{
+		shouldLog := when()
+		logger.InfoWhen(shouldLog, message.Fields{
 			"action":  "started",
 			"request": id,
 			"method":  info.FullMethod,
@@ -111,9 +121,17 @@ func MakeGripStreamInterceptor(logger grip.Journaler) grpc.StreamServerIntercept
 		if m["has_error"] == true {
 			logger.Error(m)
 		} else {
-			logger.Debug(m)
+			logger.InfoWhen(shouldLog, m)
 		}
 
 		return
 	}
+}
+
+func MakeGripStreamInterceptor(logger grip.Journaler) grpc.StreamServerInterceptor {
+	return makeGripStreamInterceptor(logger, func() bool { return true })
+}
+
+func MakeConditionalGripStreamInterceptor(logger grip.Journaler, when func() bool) grpc.StreamServerInterceptor {
+	return makeGripStreamInterceptor(logger, when)
 }
