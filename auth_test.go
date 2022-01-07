@@ -37,8 +37,8 @@ func TestAuthRequiredInterceptors(t *testing.T) {
 		{
 			name: "ValidAuth",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{username},
-				headerKeyName:  []string{userAPIKey},
+				headerUserName: {username},
+				headerKeyName:  {userAPIKey},
 			}),
 		},
 		{
@@ -49,23 +49,23 @@ func TestAuthRequiredInterceptors(t *testing.T) {
 		{
 			name: "MissingAPIKey",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{username},
+				headerUserName: {username},
 			}),
 			err: true,
 		},
 		{
 			name: "UserDNE",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{"DNE"},
-				headerKeyName:  []string{userAPIKey},
+				headerUserName: {"DNE"},
+				headerKeyName:  {userAPIKey},
 			}),
 			err: true,
 		},
 		{
 			name: "IncorrectAPIKey",
 			ctx: metadata.NewIncomingContext(context.Background(), map[string][]string{
-				headerUserName: []string{username},
-				headerKeyName:  []string{"incorrect"},
+				headerUserName: {username},
+				headerKeyName:  {"incorrect"},
 			}),
 			err: true,
 		},
