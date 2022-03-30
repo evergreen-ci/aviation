@@ -51,15 +51,15 @@ type DialOptions struct {
 func (opts *DialOptions) validate() error {
 	catcher := grip.NewBasicCatcher()
 
-	catcher.AddWhen(opts.Address == "", errors.New("must provide rpc address"))
-	catcher.AddWhen(
+	catcher.NewWhen(opts.Address == "", "must provide RPC address")
+	catcher.NewWhen(
 		((len(opts.CAFiles) == 0) != (opts.CrtFile == "")) || ((len(opts.CAFiles) == 0) != (opts.KeyFile == "")),
-		errors.New("must provide all or none of the required certificate filenames"),
+		"must provide all or none of the required certificate filenames",
 	)
-	catcher.AddWhen((opts.Username == "") != (opts.APIKey == ""), errors.New("must provide both a username and API key or neither"))
-	catcher.AddWhen(
+	catcher.NewWhen((opts.Username == "") != (opts.APIKey == ""), "must provide both a username and API key or neither")
+	catcher.NewWhen(
 		(opts.Username != "" || opts.APIKey != "") && (opts.APIUserHeader == "" || opts.APIKeyHeader == ""),
-		errors.New("must provide an API user header and key header when providing a username and API key"),
+		"must provide an API user header and key header when providing a username and API key",
 	)
 
 	return catcher.Resolve()
