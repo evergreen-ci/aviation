@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/evergreen-ci/gimlet"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -28,7 +29,7 @@ func MakeCertificateUserValidationUnaryInterceptor(um gimlet.UserManager) grpc.U
 
 		usr, err := um.GetUserByID(username)
 		if err != nil {
-			return nil, grpc.Errorf(codes.Unauthenticated, "problem finding user: %+v", err)
+			return nil, grpc.Errorf(codes.Unauthenticated, "%+v", errors.Wrapf(err, "finding user '%s'", username))
 		}
 
 		if usr == nil {
@@ -58,7 +59,7 @@ func MakeCertificateUserValidationStreamInterceptor(um gimlet.UserManager) grpc.
 
 		usr, err := um.GetUserByID(username)
 		if err != nil {
-			return grpc.Errorf(codes.Unauthenticated, "problem finding user: %+v", err)
+			return grpc.Errorf(codes.Unauthenticated, "%+v", errors.Wrapf(err, "finding user '%s'", username))
 		}
 
 		if usr == nil {

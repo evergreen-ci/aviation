@@ -172,7 +172,7 @@ func doReq(ctx context.Context, client *http.Client, req *http.Request) ([]byte,
 	out, err := ioutil.ReadAll(resp.Body)
 	catcher.Wrap(err, "reading http response")
 	catcher.Wrap(resp.Body.Close(), "closing the http response body")
-	catcher.ErrorfWhen(resp.StatusCode != http.StatusOK, "failed request with status code %d", resp.StatusCode)
+	catcher.ErrorfWhen(resp.StatusCode != http.StatusOK, "request returned status code %d", resp.StatusCode)
 
 	return out, catcher.Resolve()
 }
