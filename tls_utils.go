@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
-	"runtime"
 
 	"github.com/pkg/errors"
 )
@@ -33,15 +32,9 @@ func GetClientTLSConfig(cas [][]byte, crt, key []byte) (*tls.Config, error) {
 // given cas and, when possible, the system cert pool. On windows machines, the
 // cert pool will be empty if no cas are passed in.
 func GetCACertPool(cas ...[]byte) (*x509.CertPool, error) {
-	cp := x509.NewCertPool()
-	if runtime.GOOS != "windows" {
-		// Windows, as always, has to be different and golang cannot
-		// access the system cert pool.
-		var err error
-		cp, err = x509.SystemCertPool()
-		if err != nil {
-			return nil, errors.Wrap(err, "getting system cert pool")
-		}
+	cp, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, errors.Wrap(err, "getting system cert pool")
 	}
 
 	for _, ca := range cas {
