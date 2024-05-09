@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"runtime"
 
 	"github.com/evergreen-ci/aviation"
 	"github.com/mongodb/grip"
@@ -91,18 +90,7 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 			return nil, errors.Wrap(err, "creating TLS config")
 		}
 	} else if !opts.Insecure {
-		caCerts := opts.CACerts
-		if runtime.GOOS == "windows" {
-			// Since Windows is complicated, we need to fetch the
-			// AWS CA certs from an S3 bucket. See `getAWSCACerts`
-			// below for more information.
-			cas, err := getAWSCACerts(ctx, client)
-			if err != nil {
-				return nil, errors.Wrap(err, "getting AWS CA certs for windows")
-			}
-			caCerts = append(caCerts, cas)
-		}
-		cp, err := aviation.GetCACertPool(caCerts...)
+		cp, err := aviation.GetCACertPool(opts.CACerts...)
 		if err != nil {
 			return nil, errors.Wrap(err, "creating CA cert pool")
 		}
@@ -139,25 +127,6 @@ func makeCedarCertRequest(ctx context.Context, client *http.Client, method, url 
 		req.Header.Set(APIUserHeader, creds.Username)
 		req.Header.Set(APIKeyHeader, creds.apiKey)
 	}
-
-	return doReq(ctx, client, req)
-}
-
-// getAWSCACerts fetches AWS's root CA certificates stored in S3. This is a
-// workaround for the fact that Go cannot access the system certificate pool on
-// Windows (which would have these certificates).
-// TODO: If and when the Windows system cert issue is fixed, we can get rid of
-// this workaround. See https://github.com/golang/go/issues/16736.
-func getAWSCACerts(ctx context.Context, client *http.Client) ([]byte, error) {
-	// We are hardcoding this magic object in S3 because these certificates
-	// are not set to expire for another 20 years. Also, we are hopeful
-	// that this Windows system cert issue will go away in future versions
-	// of Go.
-	req, err := http.NewRequest(http.MethodGet, "https://s3.amazonaws.com/boxes.10gen.com/build/amazontrust/AmazonRootCA_all.pem", nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "creating http request")
-	}
-	req = req.WithContext(ctx)
 
 	return doReq(ctx, client, req)
 }
