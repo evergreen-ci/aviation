@@ -90,8 +90,7 @@ func DialCedar(ctx context.Context, client *http.Client, opts *DialCedarOptions)
 			return nil, errors.Wrap(err, "creating TLS config")
 		}
 	} else if !opts.Insecure {
-		caCerts := opts.CACerts
-		cp, err := aviation.GetCACertPool(caCerts...)
+		cp, err := aviation.GetCACertPool(opts.CACerts...)
 		if err != nil {
 			return nil, errors.Wrap(err, "creating CA cert pool")
 		}
