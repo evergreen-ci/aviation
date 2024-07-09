@@ -85,7 +85,7 @@ func TestDial(t *testing.T) {
 				CrtFile: filepath.Join("testdata", "user.crt"),
 				KeyFile: filepath.Join("testdata", "user.key"),
 			},
-			expectedOpts: 2,
+			expectedOpts: 1,
 		},
 		{
 			name: "TLSConf",
@@ -93,7 +93,7 @@ func TestDial(t *testing.T) {
 				Address: "rpcAddress",
 				TLSConf: tlsConf,
 			},
-			expectedOpts: 2,
+			expectedOpts: 1,
 		},
 		{
 			name: "UsernameAndAPIKeyWithTLS",
@@ -105,7 +105,7 @@ func TestDial(t *testing.T) {
 				APIUserHeader: "api-user",
 				APIKeyHeader:  "api-key",
 			},
-			expectedOpts: 3,
+			expectedOpts: 2,
 		},
 		{
 			name: "UsernameAndAPIKeyNoTLS",
@@ -116,14 +116,14 @@ func TestDial(t *testing.T) {
 				APIUserHeader: "api-user",
 				APIKeyHeader:  "api-key",
 			},
-			expectedOpts: 3,
+			expectedOpts: 2,
 		},
 		{
 			name: "NoAuth",
 			opts: DialOptions{
 				Address: "rpcAddress",
 			},
-			expectedOpts: 2,
+			expectedOpts: 1,
 		},
 		{
 			name: "Retries",
@@ -132,7 +132,7 @@ func TestDial(t *testing.T) {
 				TLSConf: tlsConf,
 				Retries: 15,
 			},
-			expectedOpts: 4,
+			expectedOpts: 3,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

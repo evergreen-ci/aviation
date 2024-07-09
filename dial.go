@@ -3,13 +3,11 @@ package aviation
 import (
 	"context"
 	"crypto/tls"
-	"time"
 
 	"github.com/mongodb/grip"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
 )
 
 // DialOptions describes the options for creating a client connection to a RPC
@@ -70,17 +68,7 @@ func (opts *DialOptions) getOpts() ([]grpc.DialOption, error) {
 		return nil, err
 	}
 
-	dialOpts := []grpc.DialOption{
-		// TODO (PM-2158): After upgrading Go, we should investigate
-		// whether later versions of grpc fixed the following issue
-		// and, if so, upgrade grpc:
-		// Even though we use the default keep alive time of infinity
-		// (meaning the client should never send a keep alive ping), we
-		// need a large keep alive timeout for longer running grpc
-		// requests and streams. This is likely a bug in the grpc code.
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: 1200 * time.Second}),
-	}
-
+	var dialOpts []grpc.DialOption
 	if opts.Retries > 0 {
 		dialOpts = append(
 			dialOpts,
