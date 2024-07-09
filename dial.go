@@ -3,13 +3,11 @@ package aviation
 import (
 	"context"
 	"crypto/tls"
-	"time"
 
 	"github.com/mongodb/grip"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
 )
 
 // DialOptions describes the options for creating a client connection to a RPC
@@ -70,10 +68,7 @@ func (opts *DialOptions) getOpts() ([]grpc.DialOption, error) {
 		return nil, err
 	}
 
-	dialOpts := []grpc.DialOption{
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: 2 * time.Minute}),
-	}
-
+	var dialOpts []grpc.DialOption
 	if opts.Retries > 0 {
 		dialOpts = append(
 			dialOpts,
