@@ -71,14 +71,7 @@ func (opts *DialOptions) getOpts() ([]grpc.DialOption, error) {
 	}
 
 	dialOpts := []grpc.DialOption{
-		// TODO (PM-2158): After upgrading Go, we should investigate
-		// whether later versions of grpc fixed the following issue
-		// and, if so, upgrade grpc:
-		// Even though we use the default keep alive time of infinity
-		// (meaning the client should never send a keep alive ping), we
-		// need a large keep alive timeout for longer running grpc
-		// requests and streams. This is likely a bug in the grpc code.
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: 1200 * time.Second}),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: 2 * time.Minute}),
 	}
 
 	if opts.Retries > 0 {
