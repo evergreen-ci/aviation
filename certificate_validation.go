@@ -27,7 +27,7 @@ func MakeCertificateUserValidationUnaryInterceptor(um gimlet.UserManager) grpc.U
 
 		username := tlsAuth.State.VerifiedChains[0][0].Subject.CommonName
 
-		usr, err := um.GetUserByID(username)
+		usr, err := um.GetUserByID(ctx, username)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Unauthenticated, "%+v", errors.Wrapf(err, "finding user '%s'", username))
 		}
@@ -57,7 +57,7 @@ func MakeCertificateUserValidationStreamInterceptor(um gimlet.UserManager) grpc.
 		}
 		username := tlsAuth.State.VerifiedChains[0][0].Subject.CommonName
 
-		usr, err := um.GetUserByID(username)
+		usr, err := um.GetUserByID(ctx, username)
 		if err != nil {
 			return grpc.Errorf(codes.Unauthenticated, "%+v", errors.Wrapf(err, "finding user '%s'", username))
 		}

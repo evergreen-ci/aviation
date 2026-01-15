@@ -76,7 +76,7 @@ func checkUser(ctx context.Context, um gimlet.UserManager, conf gimlet.UserMiddl
 		return grpc.Errorf(codes.Unauthenticated, "user key not provided")
 	}
 
-	usr, err := um.GetUserByID(authDataName)
+	usr, err := um.GetUserByID(ctx, authDataName)
 	if err != nil {
 		return grpc.Errorf(codes.Unauthenticated, "finding user: %+v", err)
 	}
