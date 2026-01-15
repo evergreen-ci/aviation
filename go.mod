@@ -3,7 +3,7 @@ module github.com/evergreen-ci/aviation
 go 1.24.0
 
 require (
-	github.com/evergreen-ci/gimlet v0.0.0-20251205151908-163517996b82
+	github.com/evergreen-ci/gimlet v0.0.0-20260113164336-bfe84f40e50d
 	github.com/jpillora/backoff v1.0.0
 	github.com/mongodb/grip v0.0.0-20251203205830-b5c5c666ab94
 	github.com/pkg/errors v0.9.1
