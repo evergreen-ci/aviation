@@ -22,7 +22,7 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 	retry:
 		for i = 0; i < maxRetries; i++ {
 			lastErr = invoker(ctx, method, req, reply, cc, opts...)
-			grip.Info(message.Fields{
+			grip.Info(ctx, message.Fields{
 				"message": "GRPC client retry",
 				"method":  method,
 				"attempt": i,
@@ -48,8 +48,8 @@ func MakeRetryUnaryClientInterceptor(maxRetries int) grpc.UnaryClientInterceptor
 			}
 		}
 
-		timeElapsed := time.Now().Sub(start)
-		grip.Warning(message.WrapError(lastErr, message.Fields{
+		timeElapsed := time.Since(start)
+		grip.Warning(ctx, message.WrapError(lastErr, message.Fields{
 			"message":       "GRPC client retries exceeded or canceled",
 			"method":        method,
 			"total_retries": i,
@@ -71,7 +71,7 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 	retry:
 		for i = 0; i < maxRetries; i++ {
 			clientStream, lastErr = streamer(ctx, desc, cc, method, opts...)
-			grip.Info(message.Fields{
+			grip.Info(ctx, message.Fields{
 				"message": "GRPC client retry",
 				"method":  method,
 				"attempt": i,
@@ -97,8 +97,8 @@ func MakeRetryStreamClientInterceptor(maxRetries int) grpc.StreamClientIntercept
 			}
 		}
 
-		timeElapsed := time.Now().Sub(start)
-		grip.Warning(message.WrapError(lastErr, message.Fields{
+		timeElapsed := time.Since(start)
+		grip.Warning(ctx, message.WrapError(lastErr, message.Fields{
 			"message":       "GRPC client retries exceeded or canceled",
 			"method":        method,
 			"total_retries": i,

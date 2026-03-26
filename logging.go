@@ -30,7 +30,7 @@ func makeGripUnaryInterceptor(logger grip.Journaler, when func() bool) grpc.Unar
 		}()
 
 		shouldLog := when()
-		logger.InfoWhen(shouldLog, message.Fields{
+		logger.InfoWhen(ctx, shouldLog, message.Fields{
 			"action":  "started",
 			"request": id,
 			"method":  info.FullMethod,
@@ -59,9 +59,9 @@ func makeGripUnaryInterceptor(logger grip.Journaler, when func() bool) grpc.Unar
 		}
 
 		if m["has_error"] == true {
-			logger.Error(m)
+			logger.Error(ctx, m)
 		} else {
-			logger.InfoWhen(shouldLog, m)
+			logger.InfoWhen(ctx, shouldLog, m)
 		}
 
 		return
@@ -78,6 +78,7 @@ func MakeConditionalGripUnaryInterceptor(logger grip.Journaler, when func() bool
 
 func makeGripStreamInterceptor(logger grip.Journaler, when func() bool) grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
+		ctx := stream.Context()
 		startAt := time.Now()
 		id := getNumber()
 
@@ -92,7 +93,7 @@ func makeGripStreamInterceptor(logger grip.Journaler, when func() bool) grpc.Str
 		}()
 
 		shouldLog := when()
-		logger.InfoWhen(shouldLog, message.Fields{
+		logger.InfoWhen(ctx, shouldLog, message.Fields{
 			"action":  "started",
 			"request": id,
 			"method":  info.FullMethod,
@@ -119,9 +120,9 @@ func makeGripStreamInterceptor(logger grip.Journaler, when func() bool) grpc.Str
 		}
 
 		if m["has_error"] == true {
-			logger.Error(m)
+			logger.Error(ctx, m)
 		} else {
-			logger.InfoWhen(shouldLog, m)
+			logger.InfoWhen(ctx, shouldLog, m)
 		}
 
 		return
